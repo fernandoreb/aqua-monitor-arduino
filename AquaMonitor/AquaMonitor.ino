@@ -169,6 +169,10 @@ byte nivelMax;
 byte nivelMaxSump;
 byte luzLigada;
 
+
+char dataAtual[11];
+char horaAtual[6];
+
 //Configuracao do RTC
 RTC_DS1307 RTC;
 
@@ -190,6 +194,7 @@ void setup(void)
   strcpy(alarmeGSMNum,"123456789");
   Serial.begin(9600);
   Serial2.begin(9600);
+  Serial3.begin(9600);
   pinMode(CS, OUTPUT);
   if(!SD.begin(CS)) {
     return;
@@ -262,7 +267,6 @@ void loop()
   sensores();
   controlaMenus();
   //testeGSM();
-  
  }
 
  byte intenSel = 0;
@@ -499,6 +503,10 @@ void loop()
             default: menuPrincipal();
      }//switch(menuAtivo)  
   }//if (irrecv.decode(&results)) 
+  else
+  {
+    delay(3000);
+  }
   
   if(pwdPress == 1)
   {
@@ -1473,32 +1481,204 @@ void sensores()
 		{
 			case CMD_L_TEMP_AGUA: 
 				temperatura = atof(valorComando);
+                                Serial3.print(CMD_L_TEMP_AGUA);
+                                Serial3.print(valorComando[0]);
+                                Serial3.print(valorComando[1]);
+                                Serial3.print(valorComando[2]);
+                                Serial3.print(valorComando[3]);
+                                Serial3.print(valorComando[4]);
 			break;
 			case CMD_L_TEMP_TAMPA: 
 				temperaturaTampa = atof(valorComando);
+                                Serial3.print(CMD_L_TEMP_TAMPA);
+                                Serial3.print(valorComando[0]);
+                                Serial3.print(valorComando[1]);
+                                Serial3.print(valorComando[2]);
+                                Serial3.print(valorComando[3]);
+                                Serial3.print(valorComando[4]);
 			break;
 			case CMD_L_TEMP_AMB: 
 				temperaturaAmb = atof(valorComando);
+                                Serial3.print(CMD_L_TEMP_AMB);
+                                Serial3.print(valorComando[0]);
+                                Serial3.print(valorComando[1]);
+                                Serial3.print(valorComando[2]);
+                                Serial3.print(valorComando[3]);
+                                Serial3.print(valorComando[4]);
 			break;
 			case CMD_L_NIVEL_SUMP: 
 				distancia = atof(valorComando);
+                                Serial3.print(CMD_L_NIVEL_SUMP);
+                                Serial3.print(valorComando[0]);
+                                Serial3.print(valorComando[1]);
+                                Serial3.print('0');
+                                Serial3.print('0');
+                                Serial3.print('0');
+
 			break;
 			case CMD_L_NIVEL_REPO: 
 				distanciaRep = atof(valorComando);
+                                Serial3.print(CMD_L_NIVEL_REPO);
+                                Serial3.print(valorComando[0]);
+                                Serial3.print(valorComando[1]);
+                                Serial3.print('0');
+                                Serial3.print('0');
+                                Serial3.print('0');
+
 			break;
 			case CMD_L_NIVEL_MAXI: 
-				nivelMax = 0;
-				if(valorComando[1] == '1')
-					nivelMax = 1;
+                                Serial3.print(CMD_L_NIVEL_MAXI);
+                                Serial3.print('0');
+				if(valorComando[1] == '1'){
+				  nivelMax = 1;
+                                  Serial3.print('1');
+                                }
+                                else{
+                                  nivelMax = 0;
+                                  Serial3.print('0');
+                                }
+                                
+                                Serial3.print('0');
+                                Serial3.print('0');
+                                Serial3.print('0');
 			break;
-			case CMD_L_LUZ_LIGADA: 
-				luzLigada = 0;
-				if(valorComando[1] == '1')
-					luzLigada = 1;
+			case CMD_L_LUZ_LIGADA:
+                                Serial3.print(CMD_L_LUZ_LIGADA);
+                                Serial3.print('0');
+				if(valorComando[1] == '1'){
+				  luzLigada = 1;
+                                  Serial3.print('1');
+                                }
+                                else{
+                                  luzLigada = 0;
+                                  Serial3.print('0');
+                                }
+                                Serial3.print('0');
+                                Serial3.print('0');
+                                Serial3.print('0');
 			break;
 		}
 	}
+
+  carregaDataHora();
+
 }
+int horaAnterior = -1;
+int minuto = 0;
+int intervalo = 2;
+int enviar = 0;
+
+void carregaDataHora()
+{
+  DateTime now = RTC.now();
+  char cTemp[5];
+  int iTemp;
+   
+   iTemp = now.day();
+   sprintf(cTemp, "%d", iTemp);
+   if(iTemp < 10)
+   {
+     dataAtual[0] = '0';
+     dataAtual[1] = cTemp[0];
+   }
+   else
+   {
+     dataAtual[0] = cTemp[0];
+     dataAtual[1] = cTemp[1];
+   }
+   dataAtual[2] = '/';
+   iTemp = now.month();
+   sprintf(cTemp, "%d", iTemp);
+   if(iTemp < 10)
+   {
+     dataAtual[3] = '0';
+     dataAtual[4] = cTemp[0];
+   }
+   else
+   {
+     dataAtual[3] = cTemp[0];
+     dataAtual[4] = cTemp[1];
+   }
+   dataAtual[5] = '/';
+   iTemp = now.year();
+   sprintf(cTemp, "%d", iTemp);
+   dataAtual[6] = cTemp[0];
+   dataAtual[7] = cTemp[1];
+   dataAtual[8] = cTemp[2];
+   dataAtual[9] = cTemp[3];
+   dataAtual[10] = '\0';
+   
+   iTemp = now.hour();
+   if(horaAnterior == -1)
+     horaAnterior = iTemp;
+   if(horaAnterior != iTemp){
+     minuto = 0;
+     horaAnterior = iTemp;
+   }
+   sprintf(cTemp, "%d", iTemp);
+   if(iTemp < 10)
+   {
+     horaAtual[0] = '0';
+     horaAtual[1] = cTemp[0];
+   }
+   else
+   {
+     horaAtual[0] = cTemp[0];
+     horaAtual[1] = cTemp[1];
+   }
+   horaAtual[2] = ':';
+   iTemp = now.minute();
+   if(iTemp - minuto >= intervalo)
+   {
+     enviar = 1;
+     minuto = iTemp;
+   }
+   sprintf(cTemp, "%d", iTemp);
+   if(iTemp < 10)
+   {
+     horaAtual[3] = '0';
+     horaAtual[4] = cTemp[0];
+   }
+   else
+   {
+     horaAtual[3] = cTemp[0];
+     horaAtual[4] = cTemp[1];
+   }
+   buf[5] = '\0';
+   
+   if(enviar == 1)
+   {
+     enviaPorWeb();
+     enviar = 0;
+   }
+
+}
+
+void enviaPorWeb()
+{
+    Serial3.print('D');
+  Serial3.print(dataAtual[0]);
+  Serial3.print(dataAtual[1]);
+  Serial3.print(dataAtual[2]);
+  Serial3.print(dataAtual[3]);
+  Serial3.print(dataAtual[4]);
+  Serial3.print(dataAtual[5]);
+  Serial3.print(dataAtual[6]);
+  Serial3.print(dataAtual[7]);
+  Serial3.print(dataAtual[8]);
+  Serial3.print(dataAtual[9]);
+  
+  Serial3.print('H');
+  Serial3.print(horaAtual[0]);
+  Serial3.print(horaAtual[1]);
+  Serial3.print(horaAtual[2]);
+  Serial3.print(horaAtual[3]);
+  Serial3.print(horaAtual[4]);
+  
+  Serial3.print('W');
+
+}
+
  
 /**
  Funcao que carrega as configuracoes da aplicacao, que estao no SD
